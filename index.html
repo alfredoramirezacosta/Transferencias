@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Pago - Información de Transferencia</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; padding: 20px; background: #f7f7f8; color: #111; }
+    .card { background: white; border-radius: 12px; padding: 18px; box-shadow: 0 6px 20px rgba(0,0,0,0.06); max-width:520px; margin: 24px auto; }
+    h1 { font-size: 20px; margin: 0 0 8px; }
+    p.lead { margin: 0 0 14px; color: #444; }
+    .field { margin-bottom:12px; }
+    .label { font-size:12px; color:#666; margin-bottom:6px; display:block; }
+    .value { font-size:16px; padding:10px; background:#f3f4f6; border-radius:8px; display:flex; justify-content:space-between; align-items:center; }
+    button { margin-left:8px; padding:8px 10px; border-radius:8px; border:0; background:#0b5fff; color:white; cursor:pointer; }
+    .small { font-size:13px; color:#666; margin-top:8px; }
+    .whatsapp { display:inline-block; margin-top:12px; text-decoration:none; padding:10px 14px; border-radius:10px; background:#25D366; color:white; font-weight:600; }
+    footer { text-align:center; margin-top:18px; color:#999; font-size:13px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Información para Transferencia</h1>
+    <p class="lead">Escanea el código o copia los datos para hacer la transferencia en tu banco o app.</p>
+
+    <div class="field">
+      <span class="label">Nombre del beneficiario</span>
+      <div class="value">
+        <span id="beneficiario">NOMBRE_DEL_BENEFICIARIO</span>
+        <div>
+          <button onclick="copyText('beneficiario')">Copiar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="label">Número de cuenta / CLABE</span>
+      <div class="value">
+        <span id="cuenta">NUMERO_DE_CUENTA_BBVA</span>
+        <div>
+          <button onclick="copyText('cuenta')">Copiar</button>
+        </div>
+      </div>
+      <div class="small">Si tu banco pide CLABE larga de 18 dígitos, pega la CLABE.</div>
+    </div>
+
+    <div class="field">
+      <span class="label">Concepto sugerido</span>
+      <div class="value">
+        <span id="concepto">COMPRA_TIENDA - NOMBRE_CLIENTE</span>
+        <div>
+          <button onclick="copyText('concepto')">Copiar</button>
+        </div>
+      </div>
+    </div>
+
+    <a class="whatsapp" href="https://wa.me/5216624446775?text=Hola%20quiero%20hacer%20una%20compra" target="_blank">Contactar por WhatsApp</a>
+
+    <footer>Si quieres que modifiquemos estos datos por ti, pégalos y guarda el archivo.</footer>
+  </div>
+
+<script>
+function copyText(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const text = el.innerText;
+  navigator.clipboard.writeText(text).then(function(){
+    const old = event.target.innerText;
+    event.target.innerText = 'Copiado';
+    setTimeout(()=> event.target.innerText = old,1200);
+  }, function(){
+    alert('No se pudo copiar. Selecciona y copia manualmente: ' + text);
+  });
+}
+</script>
+</body>
+</html>
