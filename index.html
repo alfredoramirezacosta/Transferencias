@@ -114,10 +114,16 @@ function copyText(id){
   });
 }
 
-// 🔁 Redirigir después de 10 segundos (10000 ms)
+// 🔁 Redirigir después de 5 minutos (300000 ms)
 setTimeout(() => {
   window.location.href = "https://google.com";
 }, 300000);
+
+// 🚫 Bloquear botón "Atrás" del navegador
+history.pushState(null, '', location.href);
+window.onpopstate = function () {
+  history.go(1);
+};
 </script>
 </body>
 </html>
