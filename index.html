@@ -10,6 +10,7 @@
       padding: 20px;
       background: #f7f7f8;
       color: #111;
+      position: relative;
     }
     .card {
       background: white;
@@ -61,14 +62,13 @@
     #contador {
       position: fixed;
       bottom: 8px;
-      right: 10px;
+      right: 12px;
       background: rgba(0,0,0,0.7);
-      color: #fff;
-      font-size: 13px;
+      color: white;
+      font-size: 12px;
       padding: 6px 10px;
       border-radius: 8px;
       font-family: monospace;
-      z-index: 9999;
     }
   </style>
 </head>
@@ -82,7 +82,7 @@
       <div class="value">
         <span id="cuenta">4152314371749121</span>
         <div>
-          <button onclick="copyText('cuenta', this)">Copiar</button>
+          <button onclick="copyText('cuenta')">Copiar</button>
         </div>
       </div>
     </div>
@@ -92,7 +92,7 @@
       <div class="value">
         <span id="beneficiario">JOSE ALFREDO RAMIREZ ACOSTA</span>
         <div>
-          <button onclick="copyText('beneficiario', this)">Copiar</button>
+          <button onclick="copyText('beneficiario')">Copiar</button>
         </div>
       </div>
     </div>
@@ -102,7 +102,7 @@
       <div class="value">
         <span id="concepto">SIX SAN PEDRO</span>
         <div>
-          <button onclick="copyText('concepto', this)">Copiar</button>
+          <button onclick="copyText('concepto')">Copiar</button>
         </div>
       </div>
     </div>
@@ -113,69 +113,42 @@
     </div>
   </div>
 
-  <div id="contador">Cargando visitas...</div>
+  <div id="contador">Visitas: <span id="visitas">0</span></div>
 
 <script>
-/* copia al portapapeles - ahora recibe el botón para cambiar el texto temporalmente */
-function copyText(id, btn){
+function copyText(id){
   const el = document.getElementById(id);
   if(!el) return;
   const text = el.innerText;
   navigator.clipboard.writeText(text).then(function(){
-    const old = btn.innerText;
-    btn.innerText = 'Copiado';
-    setTimeout(()=> btn.innerText = old,1200);
+    const old = event.target.innerText;
+    event.target.innerText = 'Copiado';
+    setTimeout(()=> event.target.innerText = old,1200);
   }, function(){
     alert('No se pudo copiar. Selecciona y copia manualmente: ' + text);
   });
 }
 
-/* redirección después de 10s */
+/* 🧠 Contador global simulado */
+const VISITAS_KEY = "contador_global_simulado";
+
+// Carga actual del contador (simulado usando localStorage)
+let visitas = localStorage.getItem(VISITAS_KEY);
+if (!visitas) visitas = 0;
+visitas++;
+localStorage.setItem(VISITAS_KEY, visitas);
+document.getElementById("visitas").textContent = visitas;
+
+/* 🔒 Evita volver atrás */
+window.history.pushState(null, "", window.location.href);
+window.onpopstate = function () {
+  window.history.pushState(null, "", window.location.href);
+};
+
+/* ⏰ Redirigir después de 10 segundos sin posibilidad de volver */
 setTimeout(() => {
-  window.location.href = "https://google.com";
+  window.location.replace("https://google.com");
 }, 10000);
-
-/* Contador global con límite por IP: 1 conteo cada 12 horas */
-async function contarVisitaConIP() {
-  const contadorID = "six_san_pedro_pagos"; // namespace que quieras
-  const limiteMs = 12 * 60 * 60 * 1000; // 12 horas
-
-  try {
-    // 1) obtener IP pública del visitante
-    const ipResp = await fetch("https://api.ipify.org?format=json");
-    if (!ipResp.ok) throw new Error("No se pudo obtener IP");
-    const ipJson = await ipResp.json();
-    const ip = ipJson.ip;
-
-    // 2) clave local para este ip
-    const key = `visita_${ip}`;
-    const lastTsStr = localStorage.getItem(key);
-    const lastTs = lastTsStr ? parseInt(lastTsStr, 10) : 0;
-    const now = Date.now();
-
-    if (!lastTs || (now - lastTs) > limiteMs) {
-      // incrementa el contador (hit)
-      const hitResp = await fetch(`https://api.countapi.xyz/hit/${contadorID}/visitas`);
-      if (!hitResp.ok) throw new Error("CountAPI hit falló");
-      const hitJson = await hitResp.json();
-      document.getElementById("contador").innerText = `👁️ Visitas totales: ${hitJson.value}`;
-      // guarda timestamp para esta IP
-      localStorage.setItem(key, String(now));
-    } else {
-      // no incrementa: solo leer el valor actual
-      const getResp = await fetch(`https://api.countapi.xyz/get/${contadorID}/visitas`);
-      if (!getResp.ok) throw new Error("CountAPI get falló");
-      const getJson = await getResp.json();
-      document.getElementById("contador").innerText = `👁️ Visitas totales: ${getJson.value}`;
-    }
-  } catch (err) {
-    // Mensaje más descriptivo para depuración (pero amigable)
-    console.warn("Contador global error:", err);
-    document.getElementById("contador").innerText = "Error al contar visitas";
-  }
-}
-
-contarVisitaConIP();
 </script>
 </body>
 </html>
