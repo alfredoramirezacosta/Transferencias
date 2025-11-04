@@ -54,7 +54,10 @@
       font-weight: 600;
       box-sizing: border-box;
     }
+    footer { text-align:center; margin-top:18px; color:#999; font-size:13px; }
     .a { text-align: center; }
+
+    /* contador */
     #contador {
       position: fixed;
       bottom: 8px;
@@ -78,7 +81,9 @@
       <span class="label">Número de cuenta</span>
       <div class="value">
         <span id="cuenta">4152314371749121</span>
-        <div><button onclick="copyText('cuenta')">Copiar</button></div>
+        <div>
+          <button onclick="copyText('cuenta', this)">Copiar</button>
+        </div>
       </div>
     </div>
 
@@ -86,7 +91,9 @@
       <span class="label">Nombre del beneficiario</span>
       <div class="value">
         <span id="beneficiario">JOSE ALFREDO RAMIREZ ACOSTA</span>
-        <div><button onclick="copyText('beneficiario')">Copiar</button></div>
+        <div>
+          <button onclick="copyText('beneficiario', this)">Copiar</button>
+        </div>
       </div>
     </div>
 
@@ -94,7 +101,9 @@
       <span class="label">Concepto sugerido</span>
       <div class="value">
         <span id="concepto">SIX SAN PEDRO</span>
-        <div><button onclick="copyText('concepto')">Copiar</button></div>
+        <div>
+          <button onclick="copyText('concepto', this)">Copiar</button>
+        </div>
       </div>
     </div>
     
@@ -104,60 +113,69 @@
     </div>
   </div>
 
-  <!-- Contador global -->
   <div id="contador">Cargando visitas...</div>
 
 <script>
-function copyText(id){
+/* copia al portapapeles - ahora recibe el botón para cambiar el texto temporalmente */
+function copyText(id, btn){
   const el = document.getElementById(id);
   if(!el) return;
   const text = el.innerText;
   navigator.clipboard.writeText(text).then(function(){
-    const old = event.target.innerText;
-    event.target.innerText = 'Copiado';
-    setTimeout(()=> event.target.innerText = old,1200);
+    const old = btn.innerText;
+    btn.innerText = 'Copiado';
+    setTimeout(()=> btn.innerText = old,1200);
   }, function(){
     alert('No se pudo copiar. Selecciona y copia manualmente: ' + text);
   });
 }
 
-// 🔁 Redirigir después de 10 segundos
+/* redirección después de 10s */
 setTimeout(() => {
   window.location.href = "https://google.com";
 }, 10000);
 
-// 🧮 Contador con límite por IP (1 visita cada 12 horas)
-async function contarVisita() {
-  const contadorID = "six_san_pedro_pagos";
-  const ultimaVisita = localStorage.getItem("ultimaVisita");
-  const ahora = Date.now();
-  const limite = 12 * 60 * 60 * 1000; // 12 horas
+/* Contador global con límite por IP: 1 conteo cada 12 horas */
+async function contarVisitaConIP() {
+  const contadorID = "six_san_pedro_pagos"; // namespace que quieras
+  const limiteMs = 12 * 60 * 60 * 1000; // 12 horas
 
   try {
-    // Obtiene IP pública del visitante
-    const ipData = await fetch("https://api.ipify.org?format=json").then(r => r.json());
-    const ip = ipData.ip;
-    const clave = `visita_${ip}`;
+    // 1) obtener IP pública del visitante
+    const ipResp = await fetch("https://api.ipify.org?format=json");
+    if (!ipResp.ok) throw new Error("No se pudo obtener IP");
+    const ipJson = await ipResp.json();
+    const ip = ipJson.ip;
 
-    const ultimaIP = localStorage.getItem(clave);
+    // 2) clave local para este ip
+    const key = `visita_${ip}`;
+    const lastTsStr = localStorage.getItem(key);
+    const lastTs = lastTsStr ? parseInt(lastTsStr, 10) : 0;
+    const now = Date.now();
 
-    if (!ultimaIP || (ultimaVisita && ahora - ultimaVisita > limite)) {
-      // Incrementa contador global
-      const data = await fetch(`https://api.countapi.xyz/hit/${contadorID}/visitas`).then(r => r.json());
-      document.getElementById("contador").innerText = `👁️ Visitas totales: ${data.value}`;
-      localStorage.setItem("ultimaVisita", ahora);
-      localStorage.setItem(clave, ip);
+    if (!lastTs || (now - lastTs) > limiteMs) {
+      // incrementa el contador (hit)
+      const hitResp = await fetch(`https://api.countapi.xyz/hit/${contadorID}/visitas`);
+      if (!hitResp.ok) throw new Error("CountAPI hit falló");
+      const hitJson = await hitResp.json();
+      document.getElementById("contador").innerText = `👁️ Visitas totales: ${hitJson.value}`;
+      // guarda timestamp para esta IP
+      localStorage.setItem(key, String(now));
     } else {
-      // Solo obtiene sin incrementar
-      const data = await fetch(`https://api.countapi.xyz/get/${contadorID}/visitas`).then(r => r.json());
-      document.getElementById("contador").innerText = `👁️ Visitas totales: ${data.value}`;
+      // no incrementa: solo leer el valor actual
+      const getResp = await fetch(`https://api.countapi.xyz/get/${contadorID}/visitas`);
+      if (!getResp.ok) throw new Error("CountAPI get falló");
+      const getJson = await getResp.json();
+      document.getElementById("contador").innerText = `👁️ Visitas totales: ${getJson.value}`;
     }
-  } catch (e) {
+  } catch (err) {
+    // Mensaje más descriptivo para depuración (pero amigable)
+    console.warn("Contador global error:", err);
     document.getElementById("contador").innerText = "Error al contar visitas";
   }
 }
 
-contarVisita();
+contarVisitaConIP();
 </script>
 </body>
 </html>
