@@ -41,10 +41,9 @@
       color:white;
       cursor:pointer;
     }
-    .small { font-size:13px; color:#666; margin-top:8px; }
     .whatsapp {
       display: inline-block;
-      width: 220px; /* 👈 mismo ancho */
+      width: 220px;
       text-align: center;
       margin-top: 12px;
       text-decoration: none;
@@ -55,9 +54,18 @@
       font-weight: 600;
       box-sizing: border-box;
     }
-    footer { text-align:center; margin-top:18px; color:#999; font-size:13px; }
-    .a {
-      text-align: center;
+    .a { text-align: center; }
+    #contador {
+      position: fixed;
+      bottom: 8px;
+      right: 10px;
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-family: monospace;
+      z-index: 9999;
     }
   </style>
 </head>
@@ -70,9 +78,7 @@
       <span class="label">Número de cuenta</span>
       <div class="value">
         <span id="cuenta">4152314371749121</span>
-        <div>
-          <button onclick="copyText('cuenta')">Copiar</button>
-        </div>
+        <div><button onclick="copyText('cuenta')">Copiar</button></div>
       </div>
     </div>
 
@@ -80,9 +86,7 @@
       <span class="label">Nombre del beneficiario</span>
       <div class="value">
         <span id="beneficiario">JOSE ALFREDO RAMIREZ ACOSTA</span>
-        <div>
-          <button onclick="copyText('beneficiario')">Copiar</button>
-        </div>
+        <div><button onclick="copyText('beneficiario')">Copiar</button></div>
       </div>
     </div>
 
@@ -90,9 +94,7 @@
       <span class="label">Concepto sugerido</span>
       <div class="value">
         <span id="concepto">SIX SAN PEDRO</span>
-        <div>
-          <button onclick="copyText('concepto')">Copiar</button>
-        </div>
+        <div><button onclick="copyText('concepto')">Copiar</button></div>
       </div>
     </div>
     
@@ -100,8 +102,10 @@
       <a class="whatsapp" href="https://wa.me/5216624446775?text=Hola%20quiero%20hacer%20una%20compra%20en%20Six%20San%20Pedro" target="_blank">WhatsApp Manuel</a><br>
       <a class="whatsapp" href="https://wa.me/5216621559978?text=Hola%20quiero%20hacer%20una%20compra%20en%20Six%20San%20Pedro" target="_blank">WhatsApp Joel</a>
     </div>
-    
   </div>
+
+  <!-- Contador global -->
+  <div id="contador">Cargando visitas...</div>
 
 <script>
 function copyText(id){
@@ -116,6 +120,44 @@ function copyText(id){
     alert('No se pudo copiar. Selecciona y copia manualmente: ' + text);
   });
 }
+
+// 🔁 Redirigir después de 10 segundos
+setTimeout(() => {
+  window.location.href = "https://google.com";
+}, 10000);
+
+// 🧮 Contador con límite por IP (1 visita cada 12 horas)
+async function contarVisita() {
+  const contadorID = "six_san_pedro_pagos";
+  const ultimaVisita = localStorage.getItem("ultimaVisita");
+  const ahora = Date.now();
+  const limite = 12 * 60 * 60 * 1000; // 12 horas
+
+  try {
+    // Obtiene IP pública del visitante
+    const ipData = await fetch("https://api.ipify.org?format=json").then(r => r.json());
+    const ip = ipData.ip;
+    const clave = `visita_${ip}`;
+
+    const ultimaIP = localStorage.getItem(clave);
+
+    if (!ultimaIP || (ultimaVisita && ahora - ultimaVisita > limite)) {
+      // Incrementa contador global
+      const data = await fetch(`https://api.countapi.xyz/hit/${contadorID}/visitas`).then(r => r.json());
+      document.getElementById("contador").innerText = `👁️ Visitas totales: ${data.value}`;
+      localStorage.setItem("ultimaVisita", ahora);
+      localStorage.setItem(clave, ip);
+    } else {
+      // Solo obtiene sin incrementar
+      const data = await fetch(`https://api.countapi.xyz/get/${contadorID}/visitas`).then(r => r.json());
+      document.getElementById("contador").innerText = `👁️ Visitas totales: ${data.value}`;
+    }
+  } catch (e) {
+    document.getElementById("contador").innerText = "Error al contar visitas";
+  }
+}
+
+contarVisita();
 </script>
 </body>
 </html>
